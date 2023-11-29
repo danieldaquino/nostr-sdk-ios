@@ -174,14 +174,14 @@ public class Tag: Codable, Equatable {
     }
     
     /// The name of the tag: event, pubkey, kind etc.
-    let name: TagName
+    public let name: TagName
     
     /// The main value associated with the tag. For example, for the
     /// pubkey name, the `value` is the 32-byte, hex-encoded pubkey.
-    let value: String
+    public let value: String
     
     /// The remaining parameters in the array of strings the tag consists of.
-    let otherParameters: [String]
+    public let otherParameters: [String]
     
     /// Creates and returns a ``Tag`` object that references some piece of content.
     /// - Parameters:
@@ -189,7 +189,7 @@ public class Tag: Codable, Equatable {
     ///   - value: The content identifier associated with the type. For example, for the
     ///                        pubkey type, the `value` is the 32-byte, hex-encoded pubkey.
     ///   - otherParameters: The remaining parameters in the array of strings the tag consists of.
-    init(name: TagName, value: String, otherParameters: [String] = []) {
+    public init(name: TagName, value: String, otherParameters: [String] = []) {
         self.name = name
         self.value = value
         self.otherParameters = otherParameters
