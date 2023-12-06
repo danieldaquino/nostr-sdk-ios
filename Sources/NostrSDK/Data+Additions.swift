@@ -5,18 +5,15 @@
 //  Created by Bryan Montz on 6/20/23.
 //
 
-import CommonCrypto
+import Crypto
 import Foundation
 
 extension Data {
     
     /// The SHA256 hash of the data.
     var sha256: Data {
-        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        withUnsafeBytes {
-            _ = CC_SHA256($0.baseAddress, CC_LONG(count), &hash)
-        }
-        return Data(hash)
+        let sha256 = SHA256.hash(data: self)
+        return Data(sha256)
     }
     
     /// Random data of a given size.

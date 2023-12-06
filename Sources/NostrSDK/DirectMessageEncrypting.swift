@@ -1,14 +1,13 @@
 //
 //  DirectMessageEncrypting.swift
-//  
+//
 //
 //  Created by Joel Klabo on 8/10/23.
 //
 
 import Foundation
 import secp256k1
-import CommonCrypto
-import CryptoKit
+import Crypto
 
 public enum DirectMessageEncryptingError: Error {
     case pubkeyInvalid
@@ -21,35 +20,19 @@ public enum DirectMessageEncryptingError: Error {
 public protocol DirectMessageEncrypting {}
 public extension DirectMessageEncrypting {
 
-    /// Produces a `String` containing `content` that has been encrypted using a sender's `privateKey` and a recipient's `publicKey`.
-    /// This function can `throw` in the case of a failure to create a shared secret, a failure to successfully encrypt, or an invalid `publicKey`.
-    ///
-    /// - Parameters:
-    ///   - content: The content to encrypt.
-    ///   - privateKey: The private key of the sender.
-    ///   - publicKey: The public key of the intended recipient.
-    /// - Returns: Encrypted content.
     func encrypt(content: String, privateKey: PrivateKey, publicKey: PublicKey) throws -> String {
 
         let sharedSecret = try getSharedSecret(privateKey: privateKey, recipient: publicKey)
         
-        let iv = Data.randomBytes(count: 16).bytes
-        let utf8Content = Data(content.utf8).bytes
-        guard let encryptedMessage = AESEncrypt(data: utf8Content, iv: iv, sharedSecret: sharedSecret) else {
+        let iv = [UInt8].random(count: 16)
+        let utf8Content = Array(content.utf8)
+        guard let encryptedMessage = try? AES.GCM.seal(utf8Content, using: SymmetricKey(data: sharedSecret), nonce: AES.GCM.Nonce(data: iv)).combined else {
             throw DirectMessageEncryptingError.encryptionError
         }
 
         return encodeDMBase64(content: encryptedMessage.bytes, iv: iv)
     }
 
-    /// Produces a `String` containing `encryptedContent` that has been decrypted using a recipient's `privateKey` and a sender's `publicKey`.
-    /// This function can `throw` in the case of a failure to create a shared secret, a failure to successfully encrypt, or an invalid `publicKey`.
-
-    /// - Parameters:
-    ///   - encryptedContent: The content to decrypt.
-    ///   - privateKey: The private key of the receiver.
-    ///   - publicKey: The public key of the sender.
-    /// - Returns: The un-encrypted message.
     func decrypt(encryptedContent message: String, privateKey: PrivateKey, publicKey: PublicKey) throws -> String {
         guard let sharedSecret = try? getSharedSecret(privateKey: privateKey, recipient: publicKey) else {
             throw EventCreatingError.invalidInput
@@ -73,8 +56,9 @@ public extension DirectMessageEncrypting {
         let ivContentTrimmed = ivContent.dropFirst(3)
 
         guard let ivContentData = Data(base64Encoded: String(ivContentTrimmed)),
-              let decryptedContentData = AESDecrypt(data: encryptedContentData.bytes, iv: ivContentData.bytes, sharedSecret: sharedSecret),
-              let decryptedMessage = String(data: decryptedContentData, encoding: .utf8) else {
+              let sealedBox = try? AES.GCM.SealedBox(combined: encryptedContentData),
+              let decryptedContentData = try? AES.GCM.open(sealedBox, using: SymmetricKey(data: sharedSecret)),
+              let decryptedMessage = String(data: Data(decryptedContentData), encoding: .utf8) else {
             throw DirectMessageEncryptingError.decryptionError
         }
 
@@ -115,54 +99,21 @@ public extension DirectMessageEncrypting {
         return sharedSecret
     }
 
-    private func AESDecrypt(data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
-        AESOperation(operation: CCOperation(kCCDecrypt), data: data, iv: iv, sharedSecret: sharedSecret)
-    }
-
-    private func AESEncrypt(data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
-        AESOperation(operation: CCOperation(kCCEncrypt), data: data, iv: iv, sharedSecret: sharedSecret)
-    }
-
     private func encodeDMBase64(content: [UInt8], iv: [UInt8]) -> String {
         let contentBase64 = Data(content).base64EncodedString()
         let ivBase64 = Data(iv).base64EncodedString()
         return contentBase64 + "?iv=" + ivBase64
     }
+}
 
-    private func AESOperation(operation: CCOperation, data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
-        let dataLength = data.count
-        let blockSize = kCCBlockSizeAES128
-        let len = Int(dataLength) + blockSize
-        var decryptedData = [UInt8](repeating: 0, count: len)
-
-        let keyLength = size_t(kCCKeySizeAES256)
-        if sharedSecret.count != keyLength {
-            assert(false, "unexpected shared_sec len: \(sharedSecret.count) != 32")
-            return nil
+// Warning: Probably not cryptographically safe.
+extension Array where Element == UInt8 {
+    static func random(count: Int) -> [UInt8] {
+        var result = [UInt8](repeating: 0, count: count)
+        for i in 0..<count {
+            result[i] = UInt8.random(in: 0...UInt8.max)
         }
-
-        let algorithm: CCAlgorithm = UInt32(kCCAlgorithmAES128)
-        let options: CCOptions   = UInt32(kCCOptionPKCS7Padding)
-
-        var numberOfBytesDecrypted: size_t = 0
-
-        let status = CCCrypt(operation,
-                             algorithm,
-                             options,
-                             sharedSecret,
-                             keyLength,
-                             iv,
-                             data,
-                             dataLength,
-                             &decryptedData,
-                             len,
-                             &numberOfBytesDecrypted
-        )
-
-        if UInt32(status) != UInt32(kCCSuccess) {
-            return nil
-        }
-
-        return Data(bytes: decryptedData, count: numberOfBytesDecrypted)
+        return result
     }
 }
+
