@@ -7,7 +7,6 @@
 
 import OpenCombine
 import Foundation
-import os.log
 
 /// An error that occurs while validating a relay URL.
 public enum RelayURLError: Error, CustomStringConvertible {
@@ -100,8 +99,6 @@ public final class Relay: ObservableObject, EventVerifying {
     /// An optional delegate interface for receiving state updates and events
     public weak var delegate: RelayDelegate?
     
-    private let logger = Logger(subsystem: "NostrSDK", category: "Relay")
-    
     /// Creates a new Relay with the provided URL.
     /// - Parameter url: The websocket URL of the relay
     ///
@@ -121,16 +118,12 @@ public final class Relay: ObservableObject, EventVerifying {
                 switch event {
                 case .connected:
                     self?.state = .connected
-                    self?.logger.info("\(event.description)")
                 case .message(let message):
                     self?.receive(message)
-                    self?.logger.info("\(event.description)")
                 case .disconnected:
                     self?.state = .notConnected
-                    self?.logger.info("\(event.description)")
                 case .error(let error):
                     self?.state = .error(error)
-                    self?.logger.error("\(event.description)")
                 }
             }
     }
