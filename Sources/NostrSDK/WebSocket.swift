@@ -5,7 +5,7 @@
 //  Created by Bryan Montz on 4/13/23.
 //
 
-import Combine
+import OpenCombine
 import Foundation
 
 enum WebSocketEvent: CustomStringConvertible {

@@ -18,6 +18,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.0.0"),
         .package(url: "https://github.com/GigaBitcoin/secp256k1.swift", from: "0.12.2"),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.1.0"),
+        .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.14.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -26,7 +27,10 @@ let package = Package(
             name: "NostrSDK",
             dependencies: [
                 .product(name: "secp256k1", package: "secp256k1.swift"),
-                .product(name: "Crypto", package: "swift-crypto")
+                .product(name: "Crypto", package: "swift-crypto"),
+                "OpenCombine",
+                .product(name: "OpenCombineFoundation", package: "OpenCombine"),
+                .product(name: "OpenCombineDispatch", package: "OpenCombine")
             ]
         ),
         .testTarget(

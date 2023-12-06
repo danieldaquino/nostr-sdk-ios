@@ -7,7 +7,7 @@
 
 import SwiftUI
 import NostrSDK
-import Combine
+import OpenCombine
 
 struct ConnectRelayView: View {
 

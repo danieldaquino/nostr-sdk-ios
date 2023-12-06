@@ -5,7 +5,7 @@
 //  Created by Bryan Montz on 6/5/23.
 //
 
-import Combine
+import OpenCombine
 import Foundation
 import os.log
 
