@@ -26,9 +26,3 @@ public extension ContentSigning {
         return signature.dataRepresentation.hexString
     }
 }
-
-extension PrivateKey: ContentSigning {
-    func signatureForContent(_ content: String) throws -> String {
-        try signatureForContent(content, privateKey: hex)
-    }
-}

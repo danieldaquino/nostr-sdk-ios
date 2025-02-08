@@ -31,7 +31,7 @@ public extension LegacyDirectMessageEncrypting {
     /// - Returns: Encrypted content.
     /// > Warning: Deprecated in favor of [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption and [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) seals and gift wraps..
     @available(*, deprecated, message: "Deprecated in favor of NIP-44 encryption and NIP-59 seals and gift wraps.")
-    func legacyEncrypt(content: String, privateKey: PrivateKey, publicKey: PublicKey) throws -> String {
+    static func legacyEncrypt(content: String, privateKey: PrivateKey, publicKey: PublicKey) throws -> String {
 
         let sharedSecret = try getSharedSecret(privateKey: privateKey, recipient: publicKey)
         
@@ -54,7 +54,7 @@ public extension LegacyDirectMessageEncrypting {
     /// - Returns: The un-encrypted message.
     /// > Warning: Deprecated in favor of [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption and [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) seals and gift wraps..
     @available(*, deprecated, message: "Deprecated in favor of NIP-44 encryption and NIP-59 seals and gift wraps.")
-    func legacyDecrypt(encryptedContent message: String, privateKey: PrivateKey, publicKey: PublicKey) throws -> String {
+    static func legacyDecrypt(encryptedContent message: String, privateKey: PrivateKey, publicKey: PublicKey) throws -> String {
         guard let sharedSecret = try? getSharedSecret(privateKey: privateKey, recipient: publicKey) else {
             throw EventCreatingError.invalidInput
         }
@@ -85,7 +85,7 @@ public extension LegacyDirectMessageEncrypting {
         return decodedContent
     }
 
-    private func getSharedSecret(privateKey: PrivateKey, recipient pubkey: PublicKey) throws -> [UInt8] {
+    static func getSharedSecret(privateKey: PrivateKey, recipient pubkey: PublicKey) throws -> [UInt8] {
         let privateKeyBytes = privateKey.dataRepresentation.bytes
         let publicKeyBytes = preparePublicKeyBytes(from: pubkey)
 
@@ -93,13 +93,13 @@ public extension LegacyDirectMessageEncrypting {
         return try computeSharedSecret(using: recipientPublicKey, and: privateKeyBytes)
     }
 
-    private func preparePublicKeyBytes(from pubkey: PublicKey) -> [UInt8] {
+    static private func preparePublicKeyBytes(from pubkey: PublicKey) -> [UInt8] {
         var bytes = pubkey.dataRepresentation.bytes
         bytes.insert(2, at: 0)
         return bytes
     }
 
-    private func parsePublicKey(from bytes: [UInt8]) throws -> secp256k1_pubkey {
+    static private func parsePublicKey(from bytes: [UInt8]) throws -> secp256k1_pubkey {
         var recipientPublicKey = secp256k1_pubkey()
         guard secp256k1_ec_pubkey_parse(secp256k1.Context.rawRepresentation, &recipientPublicKey, bytes, bytes.count) != 0 else {
             throw LegacyDirectMessageEncryptingError.pubkeyInvalid
@@ -107,7 +107,7 @@ public extension LegacyDirectMessageEncrypting {
         return recipientPublicKey
     }
 
-    private func computeSharedSecret(using publicKey: secp256k1_pubkey, and privateKeyBytes: [UInt8]) throws -> [UInt8] {
+    static private func computeSharedSecret(using publicKey: secp256k1_pubkey, and privateKeyBytes: [UInt8]) throws -> [UInt8] {
         var sharedSecret = [UInt8](repeating: 0, count: 32)
         var mutablePublicKey = publicKey
         guard secp256k1_ecdh(secp256k1.Context.rawRepresentation, &sharedSecret, &mutablePublicKey, privateKeyBytes, { (output, x32, _, _) in
@@ -119,21 +119,21 @@ public extension LegacyDirectMessageEncrypting {
         return sharedSecret
     }
 
-    private func AESDecrypt(data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
+    static private func AESDecrypt(data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
         AESOperation(operation: CCOperation(kCCDecrypt), data: data, iv: iv, sharedSecret: sharedSecret)
     }
 
-    private func AESEncrypt(data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
+    static private func AESEncrypt(data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
         AESOperation(operation: CCOperation(kCCEncrypt), data: data, iv: iv, sharedSecret: sharedSecret)
     }
 
-    private func encodeDMBase64(content: [UInt8], iv: [UInt8]) -> String {
+    static private func encodeDMBase64(content: [UInt8], iv: [UInt8]) -> String {
         let contentBase64 = Data(content).base64EncodedString()
         let ivBase64 = Data(iv).base64EncodedString()
         return contentBase64 + "?iv=" + ivBase64
     }
 
-    private func AESOperation(operation: CCOperation, data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
+    static private func AESOperation(operation: CCOperation, data: [UInt8], iv: [UInt8], sharedSecret: [UInt8]) -> Data? {
         let dataLength = data.count
         let blockSize = kCCBlockSizeAES128
         let len = Int(dataLength) + blockSize

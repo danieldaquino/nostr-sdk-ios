@@ -10,7 +10,7 @@ import Foundation
 /// A structure that describes a Nostr event.
 ///
 /// > Note: [NIP-01 Specification](https://github.com/nostr-protocol/nips/blob/master/01.md#events-and-signatures)
-public class NostrEvent: Codable, Equatable, Hashable, AlternativeSummaryTagInterpreting, ContentWarningTagInterpreting, ExpirationTagInterpreting, LabelTagInterpreting {
+public class NostrEvent: Codable, Equatable, Hashable, AlternativeSummaryTagInterpreting, ContentWarningTagInterpreting, ExpirationTagInterpreting, LabelTagInterpreting, EventVerifying {
     public static func == (lhs: NostrEvent, rhs: NostrEvent) -> Bool {
         lhs.id == rhs.id &&
         lhs.pubkey == rhs.pubkey &&
@@ -52,7 +52,7 @@ public class NostrEvent: Codable, Equatable, Hashable, AlternativeSummaryTagInte
         case signature = "sig"
     }
 
-    init(id: String, pubkey: String, createdAt: Int64, kind: EventKind, tags: [Tag], content: String, signature: String?) {
+    public init(id: String, pubkey: String, createdAt: Int64, kind: EventKind, tags: [Tag], content: String, signature: String?) {
         self.id = id
         self.pubkey = pubkey
         self.createdAt = createdAt
@@ -170,6 +170,11 @@ public class NostrEvent: Codable, Equatable, Hashable, AlternativeSummaryTagInte
     /// - Returns: The values associated with the tags of the provided name.
     public func allValues(forTagName tag: TagName) -> [String] {
         tags.filter { $0.name == tag.rawValue }.map { $0.value }
+    }
+    
+    /// Verifies the signature of the event is valid
+    public func verifyEvent() throws {
+        try verifyEvent(self)
     }
 }
 

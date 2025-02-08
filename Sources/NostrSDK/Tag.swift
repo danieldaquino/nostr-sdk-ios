@@ -107,6 +107,14 @@ public class Tag: Codable, Equatable, Hashable {
     convenience init(name: TagName, value: String, otherParameters: [String] = []) {
         self.init(name: name.rawValue, value: value, otherParameters: otherParameters)
     }
+    
+    /// Creates and returns a ``Tag`` object that references some piece of content.
+    /// - Parameters:
+    ///   - strings: The raw tag strings array
+    convenience public init?(strings: [String]) {
+        guard strings.count >= 2 else { return nil }
+        self.init(name: strings[0], value: strings[1], otherParameters: Array(strings[2..<strings.count]))
+    }
 
     required public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()

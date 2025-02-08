@@ -151,7 +151,7 @@ public extension EventCreating {
             let rawPrivateTags = privateTags.map { $0.raw }
             if let unencryptedData = try? JSONSerialization.data(withJSONObject: rawPrivateTags),
                let unencryptedContent = String(data: unencryptedData, encoding: .utf8) {
-                encryptedContent = try legacyEncrypt(content: unencryptedContent,
+                encryptedContent = try Self.legacyEncrypt(content: unencryptedContent,
                                                      privateKey: keypair.privateKey,
                                                      publicKey: keypair.publicKey)
             }

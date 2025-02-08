@@ -111,7 +111,7 @@ public struct PublicKey: Equatable {
     }
 }
 
-public struct PrivateKey {
+public struct PrivateKey: ContentSigning {
     public let hex: String
     public let nsec: String
     public let dataRepresentation: Data
@@ -153,5 +153,12 @@ public struct PrivateKey {
         self.nsec = nsec
         dataRepresentation = checksumBase8
         hex = checksumBase8.hexString
+    }
+
+
+    // MARK: ContentSigning conformance
+
+    public func signatureForContent(_ content: String) throws -> String {
+        try signatureForContent(content, privateKey: hex)
     }
 }

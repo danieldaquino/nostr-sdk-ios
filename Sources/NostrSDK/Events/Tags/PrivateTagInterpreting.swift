@@ -16,7 +16,7 @@ public extension PrivateTagInterpreting {
     /// - Parameter keypair: The keypair to use to decrypt the content.
     /// - Returns: The private tags.
     func privateTags(from content: String, withName tagName: TagName? = nil, using keypair: Keypair) -> [Tag] {
-        guard let decryptedContent = try? legacyDecrypt(encryptedContent: content, privateKey: keypair.privateKey, publicKey: keypair.publicKey),
+        guard let decryptedContent = try? Self.legacyDecrypt(encryptedContent: content, privateKey: keypair.privateKey, publicKey: keypair.publicKey),
               let jsonData = decryptedContent.data(using: .utf8) else {
             return []
         }

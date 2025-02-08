@@ -47,7 +47,7 @@ public final class LegacyEncryptedDirectMessageEvent: NostrEvent, LegacyDirectMe
             throw LegacyDirectMessageEncryptingError.pubkeyInvalid
         }
 
-        return try legacyDecrypt(encryptedContent: content, privateKey: privateKey, publicKey: recipientPublicKey)
+        return try LegacyEncryptedDirectMessageEvent.legacyDecrypt(encryptedContent: content, privateKey: privateKey, publicKey: recipientPublicKey)
     }
 }
 
@@ -64,7 +64,7 @@ public extension EventCreating {
     /// > Warning: Deprecated in favor of [NIP-17 - Private Direct Messages](https://github.com/nostr-protocol/nips/blob/master/17.md).
     @available(*, deprecated, message: "Deprecated in favor of NIP-17 - Private Direct Messages.")
     func legacyEncryptedDirectMessage(withContent content: String, toRecipient pubkey: PublicKey, signedBy keypair: Keypair) throws -> LegacyEncryptedDirectMessageEvent {
-        guard let encryptedMessage = try? legacyEncrypt(content: content, privateKey: keypair.privateKey, publicKey: pubkey) else {
+        guard let encryptedMessage = try? Self.legacyEncrypt(content: content, privateKey: keypair.privateKey, publicKey: pubkey) else {
             throw EventCreatingError.invalidInput
         }
         
